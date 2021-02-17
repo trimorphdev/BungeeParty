@@ -60,6 +60,11 @@ public class PartyCommand extends Command {
 					PartyCommand.warp(plr);
 					
 					break;
+				
+				case "disband":
+					PartyCommand.disband(plr);
+					
+					break;
 					
 				default:
 					PartyCommand.invite(plr, args[0]);
@@ -75,11 +80,13 @@ public class PartyCommand extends Command {
 	 * @param sender
 	 */
 	public static void main(ProxiedPlayer sender) {
+		Speak.sendMessage(sender, "/p help - Shows this list.");
 		Speak.sendMessage(sender, "/p create - Creates a party.");
 		Speak.sendMessage(sender, "/p invite <player> - Invites a player to the party.");
 		Speak.sendMessage(sender, "/p disband - Disbands the party.");
 		Speak.sendMessage(sender, "/p leave - Makes you leave the party you're in.");
 		Speak.sendMessage(sender, "/p acceptinvite <player> - Accepts a party invite.");
+		Speak.sendMessage(sender, "/p warp - Sends all players to your current server.");
 	}
 	
 	/**
@@ -104,12 +111,11 @@ public class PartyCommand extends Command {
 		
 		if (party != null) {
 			if (party.leader.equals(sender)) {
-				party.broadcast(sender.getName() + " left the party.");
+				party.broadcast(sender.getName() + " left the party.  Since they were the party leader, the party has been disbanded.");
 				party.disband();
 			} else {
-				party.broadcast(sender.getName() + " left the party.");
-				
 				party.players.remove(sender);
+				party.broadcast(sender.getName() + " left the party.");
 			}
 		}
 	}
@@ -121,19 +127,26 @@ public class PartyCommand extends Command {
 	 */
 	public static void invite(ProxiedPlayer sender, String invited) {
 		ProxiedPlayer plr = ProxyServer.getInstance().getPlayer(invited);
+		Party p = PartyManager.getPartyByMember(sender);
 		
 		if (plr != null) {
-			if (sender.equals(plr)) {
-				Speak.sendMessage(sender, ChatColor.RED + "You cannot invite yourself to the party.");
-				return;
-			}
-			
-			Party party = PartyManager.getPartyByMember(sender);
-			
-			if (party != null) {
-				party.invitePlayer(plr);
-				Speak.sendClickableMessage(plr, "You have been invited to " + party.leader.getName() + "'s party.  Click here to join!", "/p acceptinvite " + party.leader.getName());
-				party.broadcast(plr.getName() + " has been invited to the party.");
+			if (p != null) {
+				if (sender.equals(plr)) {
+					Speak.sendMessage(sender, ChatColor.RED + "You cannot invite yourself to the party.");
+					return;
+				} else if (p.leader.equals(plr) || p.players.contains(plr)) {
+					Speak.sendMessage(sender, ChatColor.RED + "That player is already in the party!");
+					return;
+				} else if (p.invited.contains(plr)) {
+					Speak.sendMessage(sender, ChatColor.RED + "You have already invited that player!");
+					return;
+				}
+				
+				
+				p.invitePlayer(plr);
+				Speak.sendClickableMessage(plr, "You have been invited to " + p.leader.getName() + "'s party.  Click here to join!", "/p acceptinvite " + party.leader.getName());
+				
+				p.broadcast(plr.getName() + " has been invited to the party.");
 			} else
 				Speak.sendMessage(sender, ChatColor.RED + "You must be in a party to run this command.");
 		} else
@@ -155,7 +168,6 @@ public class PartyCommand extends Command {
 			if (party1 == null) {
 				if (party != null) {
 					if (party.invited.contains(sender)) {
-						party.invited.remove(sender);
 						party.players.add(sender);
 					} else
 						Speak.sendMessage(sender, ChatColor.RED + "You weren't invited to that party.");
@@ -181,6 +193,23 @@ public class PartyCommand extends Command {
 				}
 				
 				p.broadcast("You have been warped to the server that the leader of the party is in.");
+			} else
+				Speak.sendMessage(sender, ChatColor.RED + "You must be the party leader to run this command.");
+		} else
+			Speak.sendMessage(sender, ChatColor.RED + "You must be in a party to run this command.");
+	}
+	
+	/**
+	 * Disbands the party.
+	 * @param sender
+	 */
+	public static void disband(ProxiedPlayer sender) {
+		Party p = PartyManager.getPartyByMember(sender);
+		
+		if (p != null) {
+			if (p.leader.equals(sender)) {
+				p.broadcast(ChatColor.RED + "The party has been disbanded!");
+				p.disband();
 			} else
 				Speak.sendMessage(sender, ChatColor.RED + "You must be the party leader to run this command.");
 		} else

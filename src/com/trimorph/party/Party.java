@@ -45,6 +45,14 @@ public class Party {
 	}
 	
 	/**
+	 * Removes a player from the player list.
+	 * @param player
+	 */
+	public void removePlayer(ProxiedPlayer player) {
+		players.remove(player);
+	}
+	
+	/**
 	 * Adds a player to the invited player list.
 	 * @param player
 	 */
