@@ -1,0 +1,13 @@
+name: BungeeParty
+version: 0.1.0
+description: A simple party system for BungeeCord.
+author: Trimorph
+main: com.trimorph.party.Main
+
+commands:
+   party:
+      description: Manage parties.
+      aliases: [p]
+   partychat:
+      description: Send a message to party members.
+      aliases: [pc, pchat]
